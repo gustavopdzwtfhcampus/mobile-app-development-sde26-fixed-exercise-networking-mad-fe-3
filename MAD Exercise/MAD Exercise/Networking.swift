@@ -21,21 +21,58 @@ final class Networking {
             "password": password,
             "returnSecureToken": true
         ]
-        request.httpBody = try! JSONSerialization.data(withJSONObject: body, options: [])
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            print(NetworkingError.serializationFailed)
+            return
+        }
 
         let task = session.dataTask(with: request) { data, response, error in
-            if let data {
-                let httpResponse = response as! HTTPURLResponse
-                if (200..<300).contains(httpResponse.statusCode) {
-                    let user = try! JSONDecoder().decode(User.self, from: data)
-                    print(user)
-                } else {
-                    let responseError = try! JSONDecoder().decode(ResponseError.self, from: data)
-                    print(responseError)
+            // Transport-level failure: the request never got a response at all.
+            if let error = error as NSError? {
+                switch error.code {
+                case URLError.notConnectedToInternet.rawValue,
+                     URLError.networkConnectionLost.rawValue,
+                     URLError.timedOut.rawValue:
+                    print(NetworkingError.networkUnavailable(error.localizedDescription))
+                default:
+                    print(NetworkingError.unknown(error.localizedDescription))
                 }
+                return
             }
-            print(response as Any)
-            print(error as Any)
+
+            guard let data, let httpResponse = response as? HTTPURLResponse else {
+                print(NetworkingError.unexpectedResponseFormat)
+                return
+            }
+
+            if (200..<300).contains(httpResponse.statusCode) {
+                guard let user = try? JSONDecoder().decode(User.self, from: data) else {
+                    print(NetworkingError.unexpectedResponseFormat)
+                    return
+                }
+                print(user)
+                return
+            }
+
+            guard let responseError = try? JSONDecoder().decode(ResponseError.self, from: data) else {
+                print(NetworkingError.serverError(httpResponse.statusCode))
+                return
+            }
+
+            switch responseError.message {
+            case "INVALID_EMAIL":
+                print(NetworkingError.invalidEmailFormat)
+            case "EMAIL_NOT_FOUND":
+                print(NetworkingError.emailNotFound)
+            case "INVALID_PASSWORD":
+                print(NetworkingError.wrongPassword)
+            case "INVALID_LOGIN_CREDENTIALS":
+                print(NetworkingError.invalidCredentials)
+            default:
+                print(NetworkingError.serverError(httpResponse.statusCode))
+            }
         }
         task.resume()
     }
