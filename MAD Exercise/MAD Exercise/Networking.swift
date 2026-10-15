@@ -25,8 +25,14 @@ final class Networking {
 
         let task = session.dataTask(with: request) { data, response, error in
             if let data {
-                let user = try! JSONDecoder().decode(User.self, from: data)
-                print(user)
+                let httpResponse = response as! HTTPURLResponse
+                if (200..<300).contains(httpResponse.statusCode) {
+                    let user = try! JSONDecoder().decode(User.self, from: data)
+                    print(user)
+                } else {
+                    let responseError = try! JSONDecoder().decode(ResponseError.self, from: data)
+                    print(responseError)
+                }
             }
             print(response as Any)
             print(error as Any)
