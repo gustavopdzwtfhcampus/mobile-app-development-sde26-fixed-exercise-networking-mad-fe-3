@@ -16,8 +16,9 @@ struct ContentView: View {
     private let validEmail = "user@example.com"
     private let validPassword = "password123"
 
-    @State private var email: String = ""
-    @State private var password: String = ""
+    @State private var networking = Networking()
+    @State private var email: String = "mad-fe@mad.at"
+    @State private var password: String = "madmad"
     @State private var showValidationError: Bool = false
     @State private var showLoginResultAlert: Bool = false
     @State private var loginResultMessage: String = ""
@@ -96,6 +97,8 @@ struct ContentView: View {
         }
         showValidationError = false
         isLoggingIn = true
+
+        networking.login(email: email, password: password)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             if email == validEmail && password == validPassword {
