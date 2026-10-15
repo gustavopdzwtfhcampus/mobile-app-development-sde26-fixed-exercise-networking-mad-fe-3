@@ -1,6 +1,12 @@
 # mad-fe-3
 Fixed Exercise - Networking
 
+> AI assistance (Claude) was used while working on this exercise to:
+> - improve test coverage and make sure no cases were left out
+> - verify that all exercise requirements were met
+> - draft commit messages
+> - answer questions on topics relevant to this exercise
+
 ## REST Exercise Instructions
 
 ### Abschlussbedingungen
