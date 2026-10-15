@@ -25,7 +25,8 @@ final class Networking {
 
         let task = session.dataTask(with: request) { data, response, error in
             if let data {
-                print(String(data: data, encoding: .utf8) ?? "<non-UTF8 data>")
+                let user = try! JSONDecoder().decode(User.self, from: data)
+                print(user)
             }
             print(response as Any)
             print(error as Any)
