@@ -13,9 +13,6 @@ struct ContentView: View {
         case password
     }
 
-    private let validEmail = "user@example.com"
-    private let validPassword = "password123"
-
     @State private var networking = Networking()
     @State private var email: String = "mad-fe@mad.at"
     @State private var password: String = "madmad"
@@ -98,15 +95,30 @@ struct ContentView: View {
         showValidationError = false
         isLoggingIn = true
 
-        networking.login(email: email, password: password)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if email == validEmail && password == validPassword {
-                loginResultMessage = "You are now logged in."
-            } else {
-                loginResultMessage = "Email or password is incorrect."
-            }
+        networking.login(email: email, password: password) { user, error in
             isLoggingIn = false
+
+            if let user {
+                loginResultMessage = "You are now logged in as \(user.email)."
+            } else if let error {
+                switch error {
+                case .serializationFailed:
+                    loginResultMessage = "Something went wrong preparing your request. Please try again."
+                case .invalidEmailFormat:
+                    loginResultMessage = "Please enter a valid email address."
+                case .emailNotFound, .wrongPassword, .invalidCredentials:
+                    loginResultMessage = "Email or password is incorrect."
+                case .networkUnavailable:
+                    loginResultMessage = "You appear to be offline. Please check your connection and try again."
+                case .unexpectedResponseFormat:
+                    loginResultMessage = "Received an unexpected response from the server. Please try again."
+                case .serverError:
+                    loginResultMessage = "The server ran into a problem. Please try again later."
+                case .unknown:
+                    loginResultMessage = "An unexpected error occurred. Please try again."
+                }
+            }
+
             showLoginResultAlert = true
         }
     }
